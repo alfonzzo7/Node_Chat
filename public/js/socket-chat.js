@@ -24,25 +24,24 @@ socket.on('connect', function() {
 
 });
 
-// escuchar
-socket.on('disconnect', function() {
-    // console.log('Perdimos conexión con el servidor');
+socket.on('invitacionPrivada', function(invitacion) {
+    // console.log(invitacion);
+    var win = window.open('chat-privado.html?nombre=' + invitacion.nombre + '&sala=' + invitacion.sala + '&contacto=' + invitacion.contacto, '_blank');
+    if (win) {
+        //Browser has allowed it to be opened
+        win.focus();
+    } else {
+        //Browser has blocked it
+        alert('Por favor permite la apertura de popups para este sitio');
+    }
 });
 
-// Escuchar información
 socket.on('crearMensaje', function(mensaje) {
     // console.log('Servidor:', mensaje);
     renderizarChat(mensaje, false);
 });
 
-// Escuchar cambios de usuarios
-// cuando un usuario entra o sale del chat
 socket.on('listaPersona', function(personas) {
     // console.log(personas);
     renderizarUsuarios(personas);
-});
-
-// Mensajes privados
-socket.on('mensajePrivado', function(mensaje) {
-    // console.log('Mensaje Privado:', mensaje);
 });

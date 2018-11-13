@@ -24,6 +24,18 @@ class Usuarios {
         return persona;
     }
 
+    buscarPersona(termino, sala) {
+        let personas = this.getPersonasPorSala(sala);
+
+        let regex = new RegExp(termino, 'i');
+
+        personas = personas.filter(persona => {
+            return persona.nombre.match(regex);
+        });
+
+        return personas;
+    }
+
     getPersonas() {
         return this.personas;
     }

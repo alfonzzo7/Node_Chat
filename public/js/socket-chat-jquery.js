@@ -2,28 +2,41 @@ var params = new URLSearchParams(window.location.search);
 
 var nombre = params.get('nombre');
 var sala = params.get('sala');
+var contacto = params.get('contacto');
 
 // referencias
 var divUsuarios = $('#divUsuarios');
+var divUsuariosPrivado = $('#divUsuariosPrivado');
 var formEnviar = $('#formEnviar');
+var formBuscar = $('#formBuscar');
 var txtMensaje = $('#txtMensaje');
+var txtBuscar = $('#txtBuscar');
 var divChatbox = $('#divChatbox');
+var smallSala = $('#sala');
+
+if (!contacto) {
+    contacto = sala;
+}
 
 // funcion para renderizar
 function renderizarUsuarios(personas) {
     // console.log(personas);
 
+    smallSala.text(contacto);
+
     var html = '';
 
     html += '<li>';
-    html += '    <a href="javascript:void(0)" class="active"> Chat de <span> ' + sala + '</span></a>';
+    html += '    <a href="javascript:void(0)" class="active"> Chat de <span> ' + contacto + '</span></a>';
     html += '</li>';
 
     for (let i = 0; i < personas.length; i++) {
         html += '<li>';
-        html += '    <a data-id="' + personas[i].id + '" href="javascript:void(0)"><img src="assets/images/users/1.jpg" alt="user-img" class="img-circle"> <span>' + personas[i].nombre + ' <small class="text-success">online</small></span></a>';
+        html += '    <a data-id="' + personas[i].id + '" data-nombre="' + personas[i].nombre + '" href="javascript:void(0)"><img src="assets/images/users/no-img.jpg" alt="user-img" class="img-circle"> <span>' + personas[i].nombre + ' <small class="text-success">online</small></span></a>';
         html += '</li>';
     }
+
+    divUsuariosPrivado.html(html);
 
     divUsuarios.html(html);
 }
@@ -46,13 +59,13 @@ function renderizarChat(mensaje, yo) {
         html += '        <h5>' + mensaje.nombre + '</h5>';
         html += '        <div class="box bg-light-inverse">' + mensaje.mensaje + '</div>';
         html += '    </div>';
-        html += '    <div class="chat-img"><img src="assets/images/users/5.jpg" alt="user" /></div>';
+        html += '    <div class="chat-img"><img src="assets/images/users/no-img.jpg" alt="user" /></div>';
         html += '    <div class="chat-time">' + hora + '</div>';
         html += '</li>';
     } else {
         html += '<li class="animated fadeIn">';
         if (mensaje.nombre !== 'Administrador') {
-            html += '    <div class="chat-img"><img src="assets/images/users/1.jpg" alt="user" /></div>';
+            html += '    <div class="chat-img"><img src="assets/images/users/no-img.jpg" alt="user" /></div>';
         }
         html += '    <div class="chat-content">';
         html += '        <h5>' + mensaje.nombre + '</h5>';
@@ -68,9 +81,24 @@ function renderizarChat(mensaje, yo) {
 
 // listeners
 divUsuarios.on('click', 'a', function() {
-    var id = $(this).data('id');
-    if (id) {
-        console.log(id);
+    var idInvitado = $(this).data('id');
+    var nombreInvitado = $(this).data('nombre');
+    if (idInvitado) {
+        var salaPrivada = nombre + '|' + nombreInvitado + '|' + new Date().getMilliseconds();
+        var win = window.open('chat-privado.html?nombre=' + nombre + '&sala=' + salaPrivada + '&contacto=' + nombreInvitado, '_blank');
+        if (win) {
+            //Browser has allowed it to be opened
+            win.focus();
+            socket.emit('enviarInvitacionPrivada', {
+                id: idInvitado,
+                nombre: nombreInvitado,
+                nombreAnfitrion: nombre,
+                sala: salaPrivada
+            });
+        } else {
+            //Browser has blocked it
+            alert('Por favor permite la apertura de popups para este sitio');
+        }
     }
 });
 
@@ -87,6 +115,15 @@ formEnviar.on('submit', function(e) {
         txtMensaje.val('').focus();
         renderizarChat(resp, true);
         // console.log('respuesta server: ', resp);
+    });
+});
+
+txtBuscar.on('keyup', function() {
+    // console.log(txtBuscar.val());
+
+    socket.emit('buscarContacto', { termino: txtBuscar.val(), sala: sala }, function(personas) {
+        renderizarUsuarios(personas);
+        // console.log('respuesta server: ', personas);
     });
 });
 
